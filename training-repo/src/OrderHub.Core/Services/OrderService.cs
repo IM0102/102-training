@@ -98,17 +98,14 @@ public class OrderService : IOrderService
         if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed)
             return ServiceResult<Order>.Fail($"狀態為 {order.Status} 的訂單不可取消");
 
-        order.Status = OrderStatus.Cancelled;
-
-        if (order.Status == OrderStatus.Pending || order.Status == OrderStatus.Confirmed)
+        foreach (var item in order.Items)
         {
-            foreach (var item in order.Items)
-            {
-                var product = await _productRepository.GetByIdAsync(item.ProductId);
-                if (product is not null)
-                    product.StockQuantity += item.Quantity;
-            }
+            var product = await _productRepository.GetByIdAsync(item.ProductId);
+            if (product is not null)
+                product.StockQuantity += item.Quantity;
         }
+
+        order.Status = OrderStatus.Cancelled;
 
         await _orderRepository.SaveChangesAsync();
 
