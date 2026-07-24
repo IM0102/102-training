@@ -8,6 +8,7 @@ public class CustomersController : Controller
 {
     private readonly ICustomerService _customerService;
     private readonly IOrderService _orderService;
+    private readonly string test;
 
     public CustomersController(ICustomerService customerService, IOrderService orderService)
     {
