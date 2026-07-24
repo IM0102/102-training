@@ -23,7 +23,7 @@ public static class TestSetup
         new(new OrderRepository(db), new ProductRepository(db), new CustomerRepository(db));
 
     public static ProductService CreateProductService(OrderHubDbContext db) =>
-        new(new ProductRepository(db));
+        new(new ProductRepository(db), new OrderRepository(db));
 
     public static Customer AddCustomer(OrderHubDbContext db, CustomerTier tier = CustomerTier.Standard, string name = "測試客戶")
     {

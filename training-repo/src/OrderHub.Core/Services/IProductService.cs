@@ -6,4 +6,5 @@ public interface IProductService
 {
     Task<IReadOnlyList<Product>> GetAllAsync();
     Task<IReadOnlyList<Product>> GetActiveAsync();
+    Task<IReadOnlyList<ProductLowStockItem>> GetLowStockAsync(int threshold);
 }
