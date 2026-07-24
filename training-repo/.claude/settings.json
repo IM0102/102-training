@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Read(**/appsettings.Production.json)",
+      "Read(**/*.pfx)",
+      "Edit(src/OrderHub.Infrastructure/Migrations/**)"
+    ],
+    "ask": [ "Bash(dotnet ef database drop *)", "Bash(git push *)" ],
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet run *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File .claude/hooks/block-destructive-sql.ps1"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File .claude/hooks/log-edits.ps1",
+            "statusMessage": "Logging file edit..."
+          }
+        ]
+      }
+    ]
+  }
+}
