@@ -46,3 +46,13 @@ Data flow: Controller → Service (`Core/Services`, business rules) → Reposito
 ### Startup behavior
 
 `Program.cs` runs `db.Database.Migrate()` and `DbSeeder.SeedAsync(db)` unconditionally on every app startup (not just Development) — the seeder itself is idempotent (skips seeding if any `Customer` rows already exist). `DbSeeder` uses a fixed `Random` seed so seeded data is deterministic across runs.
+
+### Additional conventions
+
+- Controller 參考 `OrdersController.cs` 的錯誤處理與回傳格式。
+- Service 介面放 `Core/Services`,實作放對應專案(`Infrastructure`/`Web`)。
+
+## 禁止事項
+
+- 不要改動 Migrations 已產生的檔案。
+- 不要在未詢問下新增第三方套件。
