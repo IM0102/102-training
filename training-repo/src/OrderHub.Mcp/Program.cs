@@ -26,6 +26,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithTools<OrderHubTools>();
+    .WithTools<OrderHubTools>()
+    .WithResources<OrderHubResources>()
+    .WithPrompts<OrderHubPrompts>();
 
 await builder.Build().RunAsync();
