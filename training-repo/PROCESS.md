@@ -100,3 +100,24 @@ public async Task<string> CancelOrder([Description("要取消的訂單 Id")] int
   取消失敗:狀態為 Cancelled 的訂單不可取消
   ```
   沒有動到任何資料,也沒有 stack trace——agent 可以直接把這句話說給使用者聽,而不是瞎猜要不要重試。`Idempotent = false` 標註在這裡也得到驗證:同一個輸入(訂單 204)第二次呼叫並不會得到跟第一次一樣的「成功」結果。
+
+# 練習 5 — Resource 與 Prompt:Tool 以外的兩個原語
+
+新增 `OrderHubResources.cs`(`orderhub://discount-rules`,`text/markdown`)與 `OrderHubPrompts.cs`(`low_stock_report`),`Program.cs` 接上 `.WithResources<OrderHubResources>()`、`.WithPrompts<OrderHubPrompts>()`。
+
+## 驗證(MCP Inspector,practice 2 的 CLI 流程)
+
+- `resources/list` 讀得到 `orderhub://discount-rules`(name「會員折扣規則」、`text/markdown`);`resources/read` 拿到完整折扣規則內容。
+- `prompts/list` 讀得到 `low_stock_report`,帶一個非必填參數 `threshold`;`prompts/get --prompt-args "threshold=5"` 展開後,`{threshold}` 正確代入成 5:「請用 low_stock 工具(threshold=5)查出低庫存商品...」。
+
+## 三者分工的思考
+
+**折扣規則用 Resource 給,和讓 agent 自己去讀 `OrderService.cs`,差在哪?**
+
+讓 agent 自己讀 code 也答得出來,但每次都要花 token 讀整個 `OrderService.cs`、還得自己從 `GetDiscountRate` 的 switch 語法推回「Gold 是 9 折」這種人話,推論路徑長、容易斷章取義(例如漏看折扣只在總額套用一次、單價快照不受影響這件事)。Resource 是把這段推論預先做好、寫成人看得懂的敘述,agent 直接讀敘述就能用,不用逆向工程程式碼。但這個好處是有代價的:**`OrderHubResources.cs` 裡的折數是寫死的字串,和 `OrderService.GetDiscountRate` 的實際數字是兩份真相**——這正是 CLAUDE.md 強調「金額別自己算,一律走 `CalculateTotal`/`GetDiscountRate`」同一堂課的翻版,只是這次換成 Resource 层也會過期。目前手動確認過兩邊數字一致(Standard 0%、Silver 5%、Gold 10%),但沒有任何機制保證未來改折扣時兩邊會一起改,只在程式碼加了一行提醒註解。更保險的做法是讓 `DiscountRules()` 動態組字串(例如遍歷 `CustomerTier` 列舉、呼叫 `GetDiscountRate` 產生數字,只把說明文字寫死),但這次先照練習給的靜態版本做,把這個取捨記下來。
+
+**prompt 範本放在 server,和每個人自己打一段話,差在哪?**
+
+自己打的話,每個人問法不同、有人會漏掉「查完 low_stock 後還要看近期訂單狀況」這個步驟,有人問完只拿到一堆原始 JSON、沒有整理成採購建議表。範本放 server 端,等於把「怎麼問」這件事也一起版本控制:全隊用同一個 `/mcp__orderhub__low_stock_report`,改進問法(例如日後想多加「同時列出上次補貨日期」)只需要改 `OrderHubPrompts.cs` 一個地方,不用去說服每個人重新打一次咒語,也不會出現「同樣的問題、五種問法、五種品質不一的答案」。這和 Tool 把業務邏輯集中在 `OrderService` 是同一個道理:重複的知識(不管是計算規則還是問法)只放一個地方,改一次全隊生效。
+
+**分工總結**:Tool 是動作(low_stock 查、cancel_order 改),Resource 是背景知識(折扣規則,讀了放進 context),Prompt 是把「常問的一句話」模板化、變成一鍵指令。三者都是為了同一件事:不要讓每個使用者自己去重新發明「該怎麼問、該用什麼規則判斷」。
