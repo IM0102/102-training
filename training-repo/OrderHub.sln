@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11806.211 stable
+VisualStudioVersion = 18.6.11806.211
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderHub.Tests", "tests\OrderHub.Tests\OrderHub.Tests.csproj", "{B60FF2FE-755A-4F05-9560-AD0C131E3D81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderHub.Mcp", "src\OrderHub.Mcp\OrderHub.Mcp.csproj", "{A2879367-A3AC-4D97-ACF6-0A376D42C25A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +75,18 @@ Global
 		{B60FF2FE-755A-4F05-9560-AD0C131E3D81}.Release|x64.Build.0 = Release|Any CPU
 		{B60FF2FE-755A-4F05-9560-AD0C131E3D81}.Release|x86.ActiveCfg = Release|Any CPU
 		{B60FF2FE-755A-4F05-9560-AD0C131E3D81}.Release|x86.Build.0 = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|x64.Build.0 = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Debug|x86.Build.0 = Debug|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|x64.ActiveCfg = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|x64.Build.0 = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|x86.ActiveCfg = Release|Any CPU
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,6 +96,7 @@ Global
 		{84388EE0-81DF-40C2-A032-280636D31C5B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{4BB08209-5814-4DEF-B1DA-741747EA4DDA} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B60FF2FE-755A-4F05-9560-AD0C131E3D81} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{A2879367-A3AC-4D97-ACF6-0A376D42C25A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C8C8D9A2-25FD-4042-A08A-862B880EAF62}
