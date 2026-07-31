@@ -7,24 +7,24 @@
 
 **你會建立的檔案總覽**
 
-| 檔案                              | 用途                                             | 要不要進 git          |
-| --------------------------------- | ------------------------------------------------ | --------------------- |
-| `AGENTS.md`                       | 專案記憶：agent 每次啟動自動讀的專案說明與慣例   | ✅ 進 git（全隊共用） |
-| `.codex/config.toml`              | 專案層設定：hooks 等（approval / sandbox 在專案層無效） | ✅ 進 git             |
-| `.codex/rules/*.rules`            | 指令規則：哪些指令直接放行、詢問、直接擋掉       | ✅ 進 git             |
-| `.codex/agents/*.toml`            | Subagents：專職的子代理（如 code reviewer）      | ✅ 進 git             |
-| `.agents/skills/<名稱>/SKILL.md`  | Skills：把流程做成可重複觸發的指令               | ✅ 進 git             |
-| `~/.codex/config.toml`            | 個人全域設定：approval / sandbox 等安全設定放這裡 | ❌ 在家目錄，不進 git |
+| 檔案                             | 用途                                                    | 要不要進 git          |
+| -------------------------------- | ------------------------------------------------------- | --------------------- |
+| `AGENTS.md`                      | 專案記憶：agent 每次啟動自動讀的專案說明與慣例          | ✅ 進 git（全隊共用） |
+| `.codex/config.toml`             | 專案層設定：hooks 等（approval / sandbox 在專案層無效） | ✅ 進 git             |
+| `.codex/rules/*.rules`           | 指令規則：哪些指令直接放行、詢問、直接擋掉              | ✅ 進 git             |
+| `.codex/agents/*.toml`           | Subagents：專職的子代理（如 code reviewer）             | ✅ 進 git             |
+| `.agents/skills/<名稱>/SKILL.md` | Skills：把流程做成可重複觸發的指令                      | ✅ 進 git             |
+| `~/.codex/config.toml`           | 個人全域設定：approval / sandbox 等安全設定放這裡       | ❌ 在家目錄，不進 git |
 
 **與 Claude Code 的對照**（兩邊都玩過的人看這張表就懂）
 
-| 概念           | Claude Code                      | Codex CLI                             |
-| -------------- | -------------------------------- | ------------------------------------- |
-| 專案記憶       | `CLAUDE.md`                      | `AGENTS.md`                           |
-| 權限規則       | `.claude/settings.json` 的 allow/ask/deny | `approval_policy` + `sandbox_mode` + `.codex/rules/`（execpolicy） |
-| Hooks          | settings.json 的 `hooks`         | `.codex/config.toml` 或 `.codex/hooks.json` 的 `hooks` |
-| Subagents      | `.claude/agents/*.md`（Markdown） | `.codex/agents/*.toml`（TOML）        |
-| 斜線指令／流程 | `.claude/skills/*/SKILL.md`      | `.agents/skills/*/SKILL.md`（舊的 `~/.codex/prompts/` custom prompts 官方文件已不再收錄） |
+| 概念           | Claude Code                               | Codex CLI                                                                                 |
+| -------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 專案記憶       | `CLAUDE.md`                               | `AGENTS.md`                                                                               |
+| 權限規則       | `.claude/settings.json` 的 allow/ask/deny | `approval_policy` + `sandbox_mode` + `.codex/rules/`（execpolicy）                        |
+| Hooks          | settings.json 的 `hooks`                  | `.codex/config.toml` 或 `.codex/hooks.json` 的 `hooks`                                    |
+| Subagents      | `.claude/agents/*.md`（Markdown）         | `.codex/agents/*.toml`（TOML）                                                            |
+| 斜線指令／流程 | `.claude/skills/*/SKILL.md`               | `.agents/skills/*/SKILL.md`（舊的 `~/.codex/prompts/` custom prompts 官方文件已不再收錄） |
 
 > **注意**：專案層的 `.codex/` 設定要在你**信任（trust）這個專案**之後才會載入——第一次在 repo 裡啟動 `codex` 時會問你是否信任此資料夾。
 
@@ -93,12 +93,17 @@ codex       # 啟動（首次會要求登入，並詢問是否信任此專案）
 - `src/OrderHub.Infrastructure/Migrations/**`：EF migration 是歷史紀錄，不要手改
 - `src/OrderHub.Web/appsettings.json`：連線字串等設定，改動前先問
 
+## 子代理與測試
+
+- 使用者要求執行測試時，必須委派給自訂 agent test_runner
+- test_runner 回報測試全部通過時，主代理必須原樣轉交結果，不可補充、改寫或附加其他摘要
+
 ## 不要做的事
 
 - 不要未經同意就加新的 NuGet 套件
 - 不要在 Controller / Service 直接使用 DbContext
 - 不要為了「順手」重構與當前任務無關的程式碼
-- 不要讀取或寫入任何機密檔（*.pfx、appsettings.Production.json、user-secrets）
+- 不要讀取或寫入任何機密檔（\*.pfx、appsettings.Production.json、user-secrets）
 ```
 
 ### 保持精簡（很重要）
@@ -263,7 +268,7 @@ rules 擋的是「指令長相」，hook 可以檢查**內容**。
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -File .codex/hooks/log-edits.ps1",
+            "command": "powershell -NoProfile -File .codex/hooks/log-edits-codex.ps1",
             "statusMessage": "Logging file edit..."
           }
         ]
@@ -302,7 +307,7 @@ Subagent 是有**獨立 context、獨立沙盒權限**的子代理。兩個經�
 Codex 的 subagent 是**一個 agent 一個 TOML 檔**。在 `training-repo/.codex/agents/code-reviewer.toml` 建立：
 
 ```toml
-name = "code-reviewer"
+name = "code_reviewer"
 description = "審查程式碼變更是否符合 OrderHub 分層慣例。完成 bug 修復或新功能後主動使用。"
 sandbox_mode = "read-only"
 developer_instructions = """
@@ -322,7 +327,7 @@ developer_instructions = """
 再建一個 `test-runner.toml`（把測試雜訊隔離在子代理）：
 
 ```toml
-name = "test-runner"
+name = "test_runner"
 description = "執行 dotnet test 並回報摘要。需要跑測試驗證時使用。"
 developer_instructions = """
 執行 `dotnet test`。全綠時只回報「N 個測試全部通過」。
@@ -334,8 +339,8 @@ developer_instructions = """
 
 **驗證方式**：
 
-- [ ] 修完一個 bug 後說「用 code-reviewer 審查我的變更」，或直接觀察 agent 會不會在適當時機自己委派。
-- [ ] 用 test-runner 跑測試
+- [ ] 修完一個 bug 後說「用 code_reviewer 審查我的變更」，或直接觀察 agent 會不會在適當時機自己委派。
+- [ ] 用 test_runner 跑測試
 
 ---
 

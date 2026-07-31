@@ -6,12 +6,12 @@
 
 ## 培訓系列地圖
 
-| 活動 | 主題                                             | 指南                                                      |
-| ---- | ------------------------------------------------ | --------------------------------------------------------- |
-| 1    | Agentic Coding:用 agent 讀懂專案、修 bug、加功能 | [activity-guideline.md](activities/activity-guideline.md) |
-| 2    | 敬請期待                                         |                                                           |
-| 3    | 敬請期待                                         |                                                           |
-| 4    | 敬請期待                                         |                                                           |
+| 活動 | 主題                                             | 指南                                          |
+| ---- | ------------------------------------------------ | --------------------------------------------- |
+| 1    | Agentic Coding:用 agent 讀懂專案、修 bug、加功能 | [活動 1](activities/activity-guideline.md)    |
+| 2    | MCP Server:給 agent 造工具                       | [活動 2](activities/activity-2-custom-mcp.md) |
+| 3    | 敬請期待                                         |                                               |
+| 4    | 敬請期待                                         |                                               |
 
 ## 技術棧
 
@@ -138,3 +138,4 @@ dotnet run --project src/OrderHub.Web   # 會重新 migrate + seed
 
 - [如何減少token使用量](references/reduce-token-usage.md)
 - [提示技巧最佳實踐](references/prompting-best-practice.md)
+- [MCP 攻擊面與防禦:](references/mcp-security-attack-vectors.md)
