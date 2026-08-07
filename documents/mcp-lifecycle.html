@@ -1,0 +1,535 @@
+<title>OrderHub MCP — Lifecycle / 生命週期</title>
+<style>
+  :root {
+    --ground:#e9edf1; --surface:#ffffff; --surface-2:#f4f7fa;
+    --ink:#141d27; --ink-soft:#42525f; --muted:#6a7a8a;
+    --line:#d5dde5; --line-strong:#bcc7d2;
+    --accent:#c8722a; --accent-soft:#f6e6d5;
+    --proto:#2c6d9e; --proto-soft:#dbe9f4;
+    --fresh:#2f855a; --fresh-soft:#d9ede2;
+    --stale:#b04a34; --stale-soft:#f4ddd6;
+    --code-bg:#0f1822; --code-ink:#e3ebf3; --code-line:#26333f;
+    --radius:14px; --maxw:1000px;
+    --mono:ui-monospace,"Cascadia Code","JetBrains Mono","SF Mono",Consolas,Menlo,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",Roboto,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0c1219; --surface:#141d27; --surface-2:#1a2631;
+      --ink:#e7eef4; --ink-soft:#aec0d0; --muted:#7e909f;
+      --line:#243140; --line-strong:#33455a;
+      --accent:#e5923f; --accent-soft:#3a2917;
+      --proto:#5aa2d2; --proto-soft:#14283b;
+      --fresh:#56b784; --fresh-soft:#152a20;
+      --stale:#d4735c; --stale-soft:#2e1a15;
+      --code-bg:#080d13; --code-ink:#dfe7ef; --code-line:#1d2833;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground:#e9edf1; --surface:#ffffff; --surface-2:#f4f7fa;
+    --ink:#141d27; --ink-soft:#42525f; --muted:#6a7a8a;
+    --line:#d5dde5; --line-strong:#bcc7d2;
+    --accent:#c8722a; --accent-soft:#f6e6d5;
+    --proto:#2c6d9e; --proto-soft:#dbe9f4;
+    --fresh:#2f855a; --fresh-soft:#d9ede2;
+    --stale:#b04a34; --stale-soft:#f4ddd6;
+    --code-bg:#0f1822; --code-ink:#e3ebf3; --code-line:#26333f;
+  }
+  :root[data-theme="dark"] {
+    --ground:#0c1219; --surface:#141d27; --surface-2:#1a2631;
+    --ink:#e7eef4; --ink-soft:#aec0d0; --muted:#7e909f;
+    --line:#243140; --line-strong:#33455a;
+    --accent:#e5923f; --accent-soft:#3a2917;
+    --proto:#5aa2d2; --proto-soft:#14283b;
+    --fresh:#56b784; --fresh-soft:#152a20;
+    --stale:#d4735c; --stale-soft:#2e1a15;
+    --code-bg:#080d13; --code-ink:#dfe7ef; --code-line:#1d2833;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:44px 44px; background-position:center;
+  }
+  body::before {
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(120% 80% at 50% -10%, transparent 40%, var(--ground) 100%);
+  }
+  .wrap { max-width:var(--maxw); margin:0 auto; padding:clamp(20px,5vw,56px) clamp(16px,4vw,32px) 80px; position:relative; }
+
+  /* language toggle */
+  .langbar {
+    position:fixed; top:14px; right:14px; z-index:60;
+    display:inline-flex; gap:3px; padding:4px;
+    background:color-mix(in srgb, var(--surface) 88%, transparent);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    border:1px solid var(--line); border-radius:999px;
+    box-shadow:0 8px 24px -14px rgba(0,0,0,.6);
+  }
+  .langbar .globe { font-size:13px; display:grid; place-items:center; padding:0 4px 0 8px; color:var(--muted); }
+  .langbar button {
+    font-family:var(--mono); font-size:12.5px; font-weight:600; border:none;
+    background:transparent; color:var(--ink-soft); padding:6px 13px; border-radius:999px;
+    cursor:pointer; transition:background .18s ease, color .18s ease;
+  }
+  .langbar button[aria-pressed="true"] { background:var(--accent); color:#fff; }
+  .langbar button:hover:not([aria-pressed="true"]) { color:var(--ink); }
+  .langbar button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  .doc { display:none; }
+  .doc.active { display:block; }
+
+  .eyebrow {
+    font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin:0 0 14px;
+    display:inline-flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before { content:""; width:26px; height:2px; background:var(--accent); display:inline-block; }
+  h1 {
+    font-size:clamp(26px,4.8vw,42px); line-height:1.14; margin:0 0 16px;
+    letter-spacing:-.01em; text-wrap:balance; font-weight:800; max-width:16ch;
+  }
+  h1 .amp { color:var(--accent); font-weight:800; }
+  .lede { font-size:clamp(15px,1.9vw,18px); color:var(--ink-soft); max-width:56ch; margin:0 0 26px; }
+  .lede code { font-family:var(--mono); font-size:.9em; background:var(--surface-2); padding:.1em .4em; border-radius:5px; border:1px solid var(--line); }
+
+  .legend { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:8px; }
+  .chip {
+    font-size:13px; display:inline-flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--line); padding:7px 13px; border-radius:999px; color:var(--ink-soft);
+  }
+  .dot { width:10px; height:10px; border-radius:3px; display:inline-block; flex:none; }
+  .dot.exe { background:var(--accent); }
+  .dot.lib { background:var(--proto); }
+  .dot.proto { background:var(--proto); border-radius:999px; }
+  .dot.data { background:var(--fresh); border-radius:999px; }
+
+  .stages { position:relative; margin-top:40px; display:flex; flex-direction:column; gap:26px; }
+  .stage {
+    position:relative; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); padding:clamp(18px,3vw,30px);
+    box-shadow:0 1px 0 var(--line-strong), 0 12px 30px -24px rgba(20,29,39,.5);
+  }
+  .stage-head { display:flex; align-items:baseline; gap:14px; margin-bottom:6px; flex-wrap:wrap; }
+  .num {
+    font-family:var(--mono); font-weight:700; font-size:13px; color:var(--accent);
+    border:1.5px solid var(--accent); border-radius:8px; padding:3px 9px; flex:none;
+    background:var(--accent-soft);
+  }
+  .stage h2 { font-size:clamp(18px,2.5vw,24px); margin:0; letter-spacing:-.005em; font-weight:750; }
+  .stage h2 .k { font-family:var(--mono); color:var(--proto); font-weight:700; }
+  .stage p { color:var(--ink-soft); margin:12px 0; max-width:64ch; }
+  .stage p strong { color:var(--ink); }
+  em.i { color:var(--accent); font-style:normal; font-weight:600; }
+
+  code, .path { font-family:var(--mono); }
+  .path { font-size:.88em; color:var(--proto); background:var(--proto-soft); padding:.08em .4em; border-radius:5px; border:1px solid color-mix(in srgb, var(--proto) 22%, transparent); white-space:nowrap; }
+  .cmd {
+    font-family:var(--mono); background:var(--code-bg); color:var(--code-ink);
+    border-radius:10px; padding:14px 16px; font-size:13.5px; line-height:1.7; overflow-x:auto;
+    border:1px solid var(--code-line); margin:14px 0;
+  }
+  .cmd .c { color:#7f93a6; } .cmd .g { color:#8fd6a6; }
+
+  .diagram { display:grid; gap:14px; margin:20px 0 6px; }
+  .node {
+    border:1.5px solid var(--line-strong); border-radius:12px; padding:14px 16px; background:var(--surface-2);
+    display:flex; flex-direction:column; gap:3px; position:relative;
+  }
+  .node .role { font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--muted); }
+  .node .title { font-family:var(--mono); font-weight:700; font-size:15px; color:var(--ink); }
+  .node .sub { font-size:13px; color:var(--ink-soft); }
+  .node.exe { border-color:var(--accent); background:var(--accent-soft); }
+  .node.exe .title { color:color-mix(in srgb, var(--accent) 78%, var(--ink)); }
+  .refs { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .refs .node { border-color:var(--proto); }
+  .refs .node .title { color:var(--proto); }
+  .ref-label { text-align:center; font-size:12.5px; color:var(--muted); }
+  .ref-label b { color:var(--accent); }
+
+  .bin { margin-top:16px; border:1px dashed var(--line-strong); border-radius:12px; padding:16px; background:var(--surface-2); }
+  .bin .bin-head { font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .files { display:flex; flex-wrap:wrap; gap:8px; }
+  .file { font-family:var(--mono); font-size:12.5px; padding:6px 10px; border-radius:7px; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); }
+  .file.star { border-color:var(--accent); color:color-mix(in srgb,var(--accent) 80%,var(--ink)); background:var(--accent-soft); font-weight:600; }
+  .file.copy { border-color:var(--proto); color:var(--proto); background:var(--proto-soft); }
+  .file .tag { font-size:10.5px; opacity:.72; margin-left:6px; }
+
+  .callout { display:flex; gap:14px; padding:14px 16px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); margin:16px 0 0; }
+  .callout .ic { font-family:var(--mono); font-weight:700; flex:none; width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-size:15px; }
+  .callout.amber { border-color:color-mix(in srgb,var(--accent) 45%,var(--line)); background:var(--accent-soft); }
+  .callout.amber .ic { background:var(--accent); color:#fff; }
+  .callout.blue { border-color:color-mix(in srgb,var(--proto) 45%,var(--line)); background:var(--proto-soft); }
+  .callout.blue .ic { background:var(--proto); color:#fff; }
+  .callout .ct { font-size:14px; color:var(--ink-soft); }
+  .callout .ct b { color:var(--ink); }
+
+  .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
+  .card { border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--surface-2); }
+  .card h4 { margin:0 0 8px; font-size:14.5px; letter-spacing:.01em; }
+  .card.here { border-color:var(--accent); }
+  .card.here h4 { color:var(--accent); }
+  .card ul { margin:0; padding-left:18px; color:var(--ink-soft); font-size:13.5px; }
+  .card li { margin:5px 0; }
+
+  .json-annot { display:grid; grid-template-columns:1fr; gap:0; }
+  .annot-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,0.95fr); gap:0; align-items:stretch; }
+  .annot-row .code-cell { font-family:var(--mono); font-size:13.5px; background:var(--code-bg); color:var(--code-ink); padding:3px 16px; border-left:1px solid var(--code-line); border-right:1px solid var(--code-line); white-space:pre; overflow-x:auto; }
+  .annot-row:first-child .code-cell { padding-top:14px; border-top:1px solid var(--code-line); border-radius:10px 0 0 0; }
+  .annot-row:last-child .code-cell { padding-bottom:14px; border-bottom:1px solid var(--code-line); border-radius:0 0 0 10px; }
+  .annot-row .note { font-size:12.5px; color:var(--ink-soft); padding:3px 14px; display:flex; align-items:center; }
+  .annot-row .note.hl { color:var(--accent); font-weight:600; }
+  .annot-row .note.hlb { color:var(--proto); font-weight:600; }
+  .k-str { color:#8fd6a6; } .k-key { color:#79b8e6; }
+
+  .seq { margin-top:20px; }
+  .lanes { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:6px; }
+  .lane-h { font-family:var(--mono); font-size:12.5px; font-weight:700; padding:10px 12px; border-radius:9px 9px 0 0; text-align:center; }
+  .lane-h.client { background:var(--accent-soft); color:color-mix(in srgb,var(--accent) 80%,var(--ink)); border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line)); }
+  .lane-h.server { background:var(--proto-soft); color:var(--proto); border:1px solid color-mix(in srgb,var(--proto) 40%,var(--line)); }
+  .steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+  .step { display:grid; grid-template-columns:34px 1fr; gap:14px; align-items:start; }
+  .step .sn { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--surface); background:var(--ink-soft); width:26px; height:26px; border-radius:7px; display:grid; place-items:center; margin-top:2px; }
+  .step.fire .sn { background:var(--accent); }
+  .step.proto .sn { background:var(--proto); }
+  .step .body { background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 14px; }
+  .step .body .t { font-weight:650; font-size:14.5px; margin-bottom:3px; }
+  .step .body .t code { font-family:var(--mono); font-size:.92em; }
+  .step .body .d { font-size:13px; color:var(--ink-soft); }
+  .step .body .wire { font-family:var(--mono); font-size:12.5px; margin-top:7px; color:var(--code-ink); background:var(--code-bg); border:1px solid var(--code-line); border-radius:7px; padding:6px 10px; overflow-x:auto; white-space:pre; }
+  .arrow { font-family:var(--mono); font-weight:700; }
+  .arrow.out { color:var(--accent); } .arrow.in { color:var(--proto); }
+  .flowline { font-family:var(--mono); font-size:12.5px; color:var(--fresh); margin-top:6px; }
+
+  .tbl { width:100%; border-collapse:collapse; margin-top:18px; font-size:14px; overflow:hidden; border-radius:12px; border:1px solid var(--line); }
+  .tbl th, .tbl td { text-align:left; padding:13px 15px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .tbl thead th { background:var(--surface-2); font-size:12.5px; letter-spacing:.02em; color:var(--muted); font-weight:600; }
+  .tbl tbody tr:last-child td { border-bottom:none; }
+  .tbl td.verdict { font-weight:700; white-space:nowrap; }
+  .pill { display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:999px; }
+  .pill.yes { background:var(--fresh-soft); color:var(--fresh); }
+  .pill.no { background:var(--stale-soft); color:var(--stale); }
+  .pill::before { content:""; width:8px; height:8px; border-radius:999px; background:currentColor; }
+  .tbl td.sc { font-size:13.5px; color:var(--ink-soft); }
+  .tbl td.sc b { color:var(--ink); }
+
+  .rule { display:flex; gap:14px; align-items:flex-start; margin-top:18px; padding:16px; border-radius:12px; background:var(--code-bg); border:1px solid var(--code-line); }
+  .rule .big { font-family:var(--mono); font-size:13px; color:var(--code-ink); line-height:1.9; }
+  .rule .big .hl { color:#8fd6a6; } .rule .big .hlr { color:#e59a86; } .rule .big .cmd2 { color:#e5b06a; } .rule .big .c { color:#7f93a6; }
+
+  footer { margin-top:44px; padding-top:22px; border-top:1px solid var(--line); color:var(--ink-soft); font-size:13.5px; display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; }
+  footer b { color:var(--accent); font-family:var(--mono); }
+
+  .reveal { opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
+  .reveal.in { opacity:1; transform:none; }
+  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none;} }
+
+  @media (max-width:720px){
+    .refs { grid-template-columns:1fr; }
+    .cols2 { grid-template-columns:1fr; }
+    .annot-row { grid-template-columns:1fr; }
+    .annot-row .note { padding:6px 14px 12px; }
+    .annot-row .code-cell { border-radius:0; }
+    body { background-size:32px 32px; }
+    .langbar { top:10px; right:10px; }
+    .langbar button { padding:5px 10px; }
+    h1 { max-width:none; }
+  }
+</style>
+
+<div class="langbar" role="group" aria-label="Language / 語言">
+  <span class="globe" aria-hidden="true">🌐</span>
+  <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+</div>
+
+<!-- ============================ ENGLISH ============================ -->
+<div class="doc" id="doc-en" lang="en">
+<div class="wrap">
+  <header>
+    <p class="eyebrow">OrderHub · MCP server lifecycle</p>
+    <h1>A local MCP server: build <span class="amp">→</span> live <span class="amp">→</span> triggered <span class="amp">→</span> changed</h1>
+    <p class="lede">Your <code>OrderHub.Mcp</code> is not a library you link — it's a small <em class="i">executable server process</em> that Claude Code launches on demand and talks to over pipes. Here's exactly how it turns from source into a running tool, and what it takes for a service-layer edit to reach the agent.</p>
+    <div class="legend">
+      <span class="chip"><span class="dot exe"></span>executable (the server)</span>
+      <span class="chip"><span class="dot lib"></span>library (linked in)</span>
+      <span class="chip"><span class="dot proto"></span>MCP protocol / stdio</span>
+      <span class="chip"><span class="dot data"></span>data path to SQL</span>
+    </div>
+  </header>
+  <div class="stages">
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">00</span><h2>What the project actually is</h2></div>
+      <p>The csproj says <code>&lt;OutputType&gt;Exe&lt;/OutputType&gt;</code> — a runnable console program. The <em class="i">service layer</em> is the library; the MCP <strong>references and links it in</strong>, then runs as its own OS process that speaks MCP on stdin/stdout.</p>
+      <div class="diagram">
+        <div class="node exe">
+          <span class="role">Executable · the server</span>
+          <span class="title">OrderHub.Mcp.exe</span>
+          <span class="sub">Host + DI + <code>WithStdioServerTransport()</code> — a process, not hosted inside Claude Code or the web app</span>
+        </div>
+        <div class="ref-label">links in ↓ <b>(compile-time reuse — one source of truth for the rules)</b></div>
+        <div class="refs">
+          <div class="node"><span class="role">Library</span><span class="title">OrderHub.Core</span><span class="sub">discount / stock / status rules</span></div>
+          <div class="node"><span class="role">Library</span><span class="title">OrderHub.Infrastructure</span><span class="sub">EF Core repos + DbContext</span></div>
+          <div class="node"><span class="role">Library</span><span class="title">ModelContextProtocol</span><span class="sub">the MCP plumbing</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">01</span><h2>Build — <span class="k">dotnet build</span></h2></div>
+      <p>Compilation drops the server <strong>and its own copy of every dependency</strong> into one output folder. It does not share DLLs with the web app — it carries its own <code>OrderHub.Core.dll</code> and <code>OrderHub.Infrastructure.dll</code>.</p>
+      <div class="cmd"><span class="c"># from training-repo/</span>
+<span class="g">dotnet</span> build src/OrderHub.Mcp</div>
+      <div class="bin">
+        <div class="bin-head">▸ <span class="path">src/OrderHub.Mcp/bin/Debug/net8.0/</span></div>
+        <div class="files">
+          <span class="file star">OrderHub.Mcp.dll<span class="tag">your server</span></span>
+          <span class="file star">OrderHub.Mcp.exe<span class="tag">launcher</span></span>
+          <span class="file">OrderHub.Mcp.deps.json</span>
+          <span class="file">OrderHub.Mcp.runtimeconfig.json</span>
+          <span class="file copy">OrderHub.Core.dll<span class="tag">copied</span></span>
+          <span class="file copy">OrderHub.Infrastructure.dll<span class="tag">copied</span></span>
+          <span class="file">Microsoft.EntityFrameworkCore.SqlServer.dll</span>
+          <span class="file">ModelContextProtocol.dll</span>
+          <span class="file">…+ ~40 dependency dlls</span>
+        </div>
+      </div>
+      <div class="callout blue"><div class="ic">i</div><div class="ct"><b>The service layer is baked in as a copy.</b> Whatever version of <code>OrderHub.Core.dll</code> sits in this folder is what the server will run — that's why a rebuild is the thing that moves new rules into place (Stage 04).</div></div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">02</span><h2>Deploy — there is no server to deploy to</h2></div>
+      <p>With <em class="i">stdio</em> transport (what we use), the MCP has <strong>no port, no host, no cloud</strong>. The <span class="path">bin/</span> folder <em class="i">is</em> the deliverable. Claude Code just launches that program when it needs it.</p>
+      <div class="cols2">
+        <div class="card here">
+          <h4>◆ Local · stdio &nbsp;(this project)</h4>
+          <ul>
+            <li>Artifact = the compiled <span class="path">bin/</span> folder on disk</li>
+            <li>Started as a <b>child process</b>, lives only during a session</li>
+            <li>"Redeploy" = simply restart the process</li>
+            <li>Needs its own DB connection string</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>◇ Remote · HTTP &nbsp;(the other option)</h4>
+          <ul>
+            <li>A long-running service you host somewhere</li>
+            <li>Reached over the network by many clients</li>
+            <li>A code change means an explicit <b>rebuild + redeploy</b></li>
+            <li>Reuses the API's auth instead of raw DB access</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">03</span><h2>Register &amp; trigger — how it comes online</h2></div>
+      <p><span class="path">training-repo/.mcp.json</span> doesn't hold code or tools. It holds one thing: <strong>the name and the exact command to spawn the process.</strong></p>
+      <div class="json-annot">
+        <div class="annot-row"><div class="code-cell">{ <span class="k-key">"mcpServers"</span>: {</div><div class="note">the registry Claude Code reads on start</div></div>
+        <div class="annot-row"><div class="code-cell">    <span class="k-key">"orderhub"</span>: {</div><div class="note hl">↳ the server's name → shows in <code>/mcp</code></div></div>
+        <div class="annot-row"><div class="code-cell">      <span class="k-key">"command"</span>: <span class="k-str">"dotnet"</span>,</div><div class="note">what to run…</div></div>
+        <div class="annot-row"><div class="code-cell">      <span class="k-key">"args"</span>: [<span class="k-str">"run"</span>, <span class="k-str">"--project"</span>, <span class="k-str">"src/OrderHub.Mcp"</span>]</div><div class="note hlb">↳ build-then-run this project as a child process</div></div>
+        <div class="annot-row"><div class="code-cell">} } }</div><div class="note"></div></div>
+      </div>
+      <div class="seq">
+        <div class="lanes">
+          <div class="lane-h client">CLAUDE CODE · client</div>
+          <div class="lane-h server">OrderHub.Mcp · server process</div>
+        </div>
+        <ol class="steps">
+          <li class="step fire"><span class="sn">1</span><div class="body"><div class="t"><span class="arrow out">▶</span> Spawn the process</div><div class="d">Open Claude Code in the folder → it reads <span class="path">.mcp.json</span> → runs the command as a child, wired to its stdin/stdout.</div><div class="wire">$ dotnet run --project src/OrderHub.Mcp   <span style="color:#7f93a6">(incremental build, then start)</span></div></div></li>
+          <li class="step proto"><span class="sn">2</span><div class="body"><div class="t"><span class="arrow out">→</span> initialize &nbsp;<span class="arrow in">←</span> serverInfo</div><div class="d">The MCP handshake over the pipes. The server announces itself.</div></div></li>
+          <li class="step proto"><span class="sn">3</span><div class="body"><div class="t"><span class="arrow out">→</span> tools/list &nbsp;<span class="arrow in">←</span> [ get_order, low_stock, … ]</div><div class="d">Now the tools appear in <code>/mcp</code>. <b>This is "online."</b></div></div></li>
+          <li class="step"><span class="sn">4</span><div class="body"><div class="t">⏸ Idle &amp; alive</div><div class="d">The process stays running, waiting on stdin, for the whole session.</div></div></li>
+          <li class="step fire"><span class="sn">5</span><div class="body"><div class="t"><span class="arrow out">→</span> tools/call <code>low_stock {threshold:5}</code></div><div class="d">The agent decides to use a tool; the request goes down the pipe.</div><div class="flowline">↳ server runs C# → OrderService → EF Core → SQL Server</div><div class="wire" style="margin-top:8px"><span class="arrow in">←</span> content: [ {"Sku":"SKU-1048","StockQuantity":2}, … ]</div></div></li>
+          <li class="step"><span class="sn">6</span><div class="body"><div class="t">■ Session ends</div><div class="d">Claude Code <b>kills the child process</b>. No daemon is left running — it lives and dies with the session.</div></div></li>
+        </ol>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">04</span><h2>How a code change reaches the agent</h2></div>
+      <p>Because <span class="path">.mcp.json</span> runs <code>dotnet run</code> (build-then-start), <strong>every spawn rebuilds first</strong> — so a fresh start picks up edits to the service layer automatically. But a process already running is frozen on the DLLs it started with.</p>
+      <table class="tbl">
+        <thead><tr><th>You edited the service layer, then…</th><th>Runs new code?</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="sc"><b>Start a new Claude Code session</b> (or reconnect the server in <code>/mcp</code>)</td><td class="verdict"><span class="pill yes">yes</span></td><td class="sc"><code>dotnet run</code> rebuilds on spawn → new <code>OrderHub.Core.dll</code> is loaded fresh.</td></tr>
+          <tr><td class="sc"><b>Nothing — keep the same live session</b></td><td class="verdict"><span class="pill no">no</span></td><td class="sc">The child process is still running the <b>old DLLs in memory</b>. No hot-reload. Restart it.</td></tr>
+          <tr><td class="sc">Config pointed at a <b>prebuilt DLL</b> instead of <code>dotnet run</code></td><td class="verdict"><span class="pill no">no</span></td><td class="sc">Runs whatever was last built — <b>stale</b> until you rebuild yourself. (That's why we chose <code>dotnet run</code>.)</td></tr>
+        </tbody>
+      </table>
+      <div class="rule"><div class="big"><span class="c">// the whole rule in one line</span>
+edit rules  →  <span class="hlr">restart the server</span>  →  next spawn does <span class="cmd2">dotnet run</span> = rebuild  →  <span class="hl">agent now runs the new logic</span></div></div>
+      <div class="callout amber"><div class="ic">!</div><div class="ct"><b>First spawn after a change is slower</b> (it's compiling), and a short client timeout can miss it. Run <code>dotnet build</code> once <em>before</em> launching Claude Code so the on-spawn build is a no-op and the server connects instantly.</div></div>
+    </section>
+  </div>
+  <footer><span><b>TL;DR</b> — build → the bin folder is the artifact → Claude Code spawns it per session &amp; talks over stdio → restart to pick up new code.</span></footer>
+</div>
+</div>
+
+<!-- ============================ 繁體中文 ============================ -->
+<div class="doc active" id="doc-zh" lang="zh-Hant">
+<div class="wrap">
+  <header>
+    <p class="eyebrow">OrderHub · MCP 伺服器生命週期</p>
+    <h1>一支本機 MCP 伺服器：建置 <span class="amp">→</span> 上線 <span class="amp">→</span> 被觸發 <span class="amp">→</span> 變更</h1>
+    <p class="lede">你的 <code>OrderHub.Mcp</code> 不是被你連結進去的函式庫——它是一支由 Claude Code <em class="i">按需啟動的可執行伺服器程序</em>，透過管線（pipe）與它溝通。以下說明它如何從原始碼變成執行中的工具，以及一次 service 層的修改要怎樣才能真正傳到 agent。</p>
+    <div class="legend">
+      <span class="chip"><span class="dot exe"></span>可執行檔（伺服器本體）</span>
+      <span class="chip"><span class="dot lib"></span>函式庫（被連結進來）</span>
+      <span class="chip"><span class="dot proto"></span>MCP 協定 / stdio</span>
+      <span class="chip"><span class="dot data"></span>通往 SQL 的資料路徑</span>
+    </div>
+  </header>
+  <div class="stages">
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">00</span><h2>這個專案到底是什麼</h2></div>
+      <p>csproj 裡寫的是 <code>&lt;OutputType&gt;Exe&lt;/OutputType&gt;</code>——一支可執行的 console 程式。<em class="i">service 層</em>才是函式庫；MCP <strong>把它參照並連結進來</strong>，然後以自己的 OS 程序執行，透過 stdin/stdout 說 MCP 協定。</p>
+      <div class="diagram">
+        <div class="node exe">
+          <span class="role">可執行檔 · 伺服器本體</span>
+          <span class="title">OrderHub.Mcp.exe</span>
+          <span class="sub">Host + DI + <code>WithStdioServerTransport()</code>——一支獨立程序，不是跑在 Claude Code 或網站「裡面」</span>
+        </div>
+        <div class="ref-label">連結進來 ↓ <b>（編譯期重用——商業規則的單一真相）</b></div>
+        <div class="refs">
+          <div class="node"><span class="role">函式庫</span><span class="title">OrderHub.Core</span><span class="sub">折扣 / 庫存 / 狀態規則</span></div>
+          <div class="node"><span class="role">函式庫</span><span class="title">OrderHub.Infrastructure</span><span class="sub">EF Core repository + DbContext</span></div>
+          <div class="node"><span class="role">函式庫</span><span class="title">ModelContextProtocol</span><span class="sub">MCP 協定機制</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">01</span><h2>建置 — <span class="k">dotnet build</span></h2></div>
+      <p>編譯會把伺服器<strong>連同它自己的每一個相依 DLL</strong>一起放進單一輸出資料夾。它<strong>不與網站共用 DLL</strong>——它帶著自己的一份 <code>OrderHub.Core.dll</code> 與 <code>OrderHub.Infrastructure.dll</code>。</p>
+      <div class="cmd"><span class="c"># 於 training-repo/</span>
+<span class="g">dotnet</span> build src/OrderHub.Mcp</div>
+      <div class="bin">
+        <div class="bin-head">▸ <span class="path">src/OrderHub.Mcp/bin/Debug/net8.0/</span></div>
+        <div class="files">
+          <span class="file star">OrderHub.Mcp.dll<span class="tag">你的伺服器</span></span>
+          <span class="file star">OrderHub.Mcp.exe<span class="tag">啟動器</span></span>
+          <span class="file">OrderHub.Mcp.deps.json</span>
+          <span class="file">OrderHub.Mcp.runtimeconfig.json</span>
+          <span class="file copy">OrderHub.Core.dll<span class="tag">複製進來</span></span>
+          <span class="file copy">OrderHub.Infrastructure.dll<span class="tag">複製進來</span></span>
+          <span class="file">Microsoft.EntityFrameworkCore.SqlServer.dll</span>
+          <span class="file">ModelContextProtocol.dll</span>
+          <span class="file">…+ 約 40 個相依 dll</span>
+        </div>
+      </div>
+      <div class="callout blue"><div class="ic">i</div><div class="ct"><b>service 層是以「複本」形式打包進來。</b>這個資料夾裡的 <code>OrderHub.Core.dll</code> 是哪個版本，伺服器就跑哪個版本——這就是為什麼「重新建置」才是把新規則搬到位的關鍵（見階段 04）。</div></div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">02</span><h2>部署 — 其實沒有伺服器可以部署</h2></div>
+      <p>使用 <em class="i">stdio</em> 傳輸（我們採用的方式）時，MCP <strong>沒有 port、沒有 host、沒有雲端</strong>。<span class="path">bin/</span> 資料夾<em class="i">就是</em>交付物。Claude Code 需要時直接啟動那支程式。</p>
+      <div class="cols2">
+        <div class="card here">
+          <h4>◆ 本機 · stdio &nbsp;（本專案）</h4>
+          <ul>
+            <li>交付物 = 磁碟上編譯好的 <span class="path">bin/</span> 資料夾</li>
+            <li>以<b>子程序</b>啟動，只在 session 期間存活</li>
+            <li>「重新部署」= 就是重啟這支程序</li>
+            <li>需要自己的 DB 連線字串</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>◇ 遠端 · HTTP &nbsp;（另一種選項）</h4>
+          <ul>
+            <li>一支你自行架設、長時間執行的服務</li>
+            <li>由多個 client 透過網路連線</li>
+            <li>程式碼變更代表要明確地<b>重建 + 重新部署</b></li>
+            <li>重用 API 的驗證，而非直接存取 DB</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">03</span><h2>註冊與觸發 — 它如何「上線」</h2></div>
+      <p><span class="path">training-repo/.mcp.json</span> 裡不放程式碼、也不放工具。它只放一件事：<strong>名稱，以及「啟動這支程序」的確切指令。</strong></p>
+      <div class="json-annot">
+        <div class="annot-row"><div class="code-cell">{ <span class="k-key">"mcpServers"</span>: {</div><div class="note">Claude Code 啟動時讀取的登錄表</div></div>
+        <div class="annot-row"><div class="code-cell">    <span class="k-key">"orderhub"</span>: {</div><div class="note hl">↳ 伺服器名稱 → 會出現在 <code>/mcp</code></div></div>
+        <div class="annot-row"><div class="code-cell">      <span class="k-key">"command"</span>: <span class="k-str">"dotnet"</span>,</div><div class="note">要執行什麼…</div></div>
+        <div class="annot-row"><div class="code-cell">      <span class="k-key">"args"</span>: [<span class="k-str">"run"</span>, <span class="k-str">"--project"</span>, <span class="k-str">"src/OrderHub.Mcp"</span>]</div><div class="note hlb">↳ 以子程序「先建置再執行」這個專案</div></div>
+        <div class="annot-row"><div class="code-cell">} } }</div><div class="note"></div></div>
+      </div>
+      <div class="seq">
+        <div class="lanes">
+          <div class="lane-h client">CLAUDE CODE · 用戶端</div>
+          <div class="lane-h server">OrderHub.Mcp · 伺服器程序</div>
+        </div>
+        <ol class="steps">
+          <li class="step fire"><span class="sn">1</span><div class="body"><div class="t"><span class="arrow out">▶</span> 啟動程序（spawn）</div><div class="d">在資料夾開啟 Claude Code → 讀取 <span class="path">.mcp.json</span> → 以子程序執行該指令，接上它的 stdin/stdout。</div><div class="wire">$ dotnet run --project src/OrderHub.Mcp   <span style="color:#7f93a6">（增量建置，然後啟動）</span></div></div></li>
+          <li class="step proto"><span class="sn">2</span><div class="body"><div class="t"><span class="arrow out">→</span> initialize &nbsp;<span class="arrow in">←</span> serverInfo</div><div class="d">透過管線進行 MCP 握手；伺服器自我介紹。</div></div></li>
+          <li class="step proto"><span class="sn">3</span><div class="body"><div class="t"><span class="arrow out">→</span> tools/list &nbsp;<span class="arrow in">←</span> [ get_order, low_stock, … ]</div><div class="d">工具現在出現在 <code>/mcp</code>。<b>這就是「上線」。</b></div></div></li>
+          <li class="step"><span class="sn">4</span><div class="body"><div class="t">⏸ 閒置但存活</div><div class="d">程序持續執行，在整個 session 期間等待 stdin 的請求。</div></div></li>
+          <li class="step fire"><span class="sn">5</span><div class="body"><div class="t"><span class="arrow out">→</span> tools/call <code>low_stock {threshold:5}</code></div><div class="d">agent 決定使用某個工具；請求送進管線。</div><div class="flowline">↳ 伺服器執行 C# → OrderService → EF Core → SQL Server</div><div class="wire" style="margin-top:8px"><span class="arrow in">←</span> content: [ {"Sku":"SKU-1048","StockQuantity":2}, … ]</div></div></li>
+          <li class="step"><span class="sn">6</span><div class="body"><div class="t">■ session 結束</div><div class="d">Claude Code <b>終止子程序</b>。不留任何背景常駐——它與 session 同生共死。</div></div></li>
+        </ol>
+      </div>
+    </section>
+    <section class="stage reveal">
+      <div class="stage-head"><span class="num">04</span><h2>一次程式碼變更如何傳到 agent</h2></div>
+      <p>因為 <span class="path">.mcp.json</span> 執行的是 <code>dotnet run</code>（先建置再啟動），<strong>每次啟動都會先重新建置</strong>——所以「重新啟動」會自動吃到 service 層的修改。但一支<strong>已經在跑的程序</strong>，會凍結在它啟動當下所載入的 DLL。</p>
+      <table class="tbl">
+        <thead><tr><th>你改了 service 層，然後…</th><th>會跑到新程式碼嗎？</th><th>為什麼</th></tr></thead>
+        <tbody>
+          <tr><td class="sc"><b>開一個新的 Claude Code session</b>（或在 <code>/mcp</code> 裡重新連線伺服器）</td><td class="verdict"><span class="pill yes">會</span></td><td class="sc"><code>dotnet run</code> 在啟動時重建 → 全新載入新版 <code>OrderHub.Core.dll</code>。</td></tr>
+          <tr><td class="sc"><b>什麼都不做——維持同一個執行中的 session</b></td><td class="verdict"><span class="pill no">不會</span></td><td class="sc">子程序仍在記憶體裡跑<b>舊的 DLL</b>。沒有熱重載（hot-reload），要重啟它。</td></tr>
+          <tr><td class="sc">設定指向<b>預先建置好的 DLL</b>，而非 <code>dotnet run</code></td><td class="verdict"><span class="pill no">不會</span></td><td class="sc">跑的是上次建置的結果——在你自己重建之前都是<b>過期的</b>。（這就是我們選 <code>dotnet run</code> 的原因。）</td></tr>
+        </tbody>
+      </table>
+      <div class="rule"><div class="big"><span class="c">// 整條規則一句話</span>
+改規則 → <span class="hlr">重啟伺服器</span> → 下次啟動執行 <span class="cmd2">dotnet run</span> = 重建 → <span class="hl">agent 現在跑的就是新邏輯</span></div></div>
+      <div class="callout amber"><div class="ic">!</div><div class="ct"><b>變更後第一次啟動會比較慢</b>（它正在編譯），過短的 client 連線逾時可能會錯過它。啟動 Claude Code <em>之前</em>先跑一次 <code>dotnet build</code>，讓啟動時的建置變成「無動作」，伺服器就能瞬間連上。</div></div>
+    </section>
+  </div>
+  <footer><span><b>一句話總結</b> — 建置 → bin 資料夾就是交付物 → Claude Code 每個 session 啟動它並透過 stdio 溝通 → 要吃到新程式碼就重啟。</span></footer>
+</div>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.langbar button'));
+    var docs = { en: document.getElementById('doc-en'), zh: document.getElementById('doc-zh') };
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var io = null;
+
+    function reveal(container) {
+      var els = container.querySelectorAll('.reveal');
+      if (io) io.disconnect();
+      if (!('IntersectionObserver' in window) || reduce) {
+        els.forEach(function (e) { e.classList.add('in'); });
+        return;
+      }
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+      }, { threshold: 0.12 });
+      els.forEach(function (e) { e.classList.remove('in'); io.observe(e); });
+    }
+
+    function setLang(lang) {
+      if (!docs[lang]) lang = 'en';
+      Object.keys(docs).forEach(function (k) { docs[k].classList.toggle('active', k === lang); });
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+      try { localStorage.setItem('mcp-lifecycle-lang', lang); } catch (e) {}
+      reveal(docs[lang]);
+      window.scrollTo(0, 0);
+    }
+
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.dataset.lang); });
+    });
+
+    var saved;
+    try { saved = localStorage.getItem('mcp-lifecycle-lang'); } catch (e) {}
+    // Default to Traditional Chinese; a saved choice (from the toggle) still wins.
+    var initial = saved || 'zh';
+    setLang(initial);
+  })();
+</script>
