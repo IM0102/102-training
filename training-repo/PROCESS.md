@@ -151,3 +151,28 @@ public async Task<string> CancelOrder([Description("要取消的訂單 Id")] int
 - **塞完全無關文字(食譜)→ `intent: unsupported` → 「無法理解的查詢」**:貼了一段完整的番茄炒蛋食譜,日誌確認真的打了 Gemini API(不是短路判斷),拿到回應後系統判定不支援,回 422,沒有 500 或例外堆疊。
 
 四項驗證都是打真實的 Gemini API 跑完整流程,不是 mock。
+
+# 練習 2 — 同一個 service 接上網站頁面
+
+新增 `GET /Orders/Search?q=...`。重點不是新邏輯,是驗證分層的紅利:`IOrderSearchService` 一行都沒改,只在 `OrdersController` 多注入一個介面、多一個 action,配一個 `OrderSearchViewModel` 和 `Search.cshtml`,導覽列加一個「AI 查詢」入口。
+
+## 實作
+
+- `OrdersController.Search`:呼叫 `_orderSearchService.SearchAsync(q, cancellationToken)`,`result.Success` 為否時把 `result.ErrorMessage` 塞進 `ViewModel.ErrorMessage`,`catch (AiServiceUnavailableException ex)` 一樣塞 `ex.Message`——兩種失敗都收斂成同一個 `ErrorMessage` 欄位,View 只認這一個欄位,不用分辨背後是驗證失敗還是服務不可用。
+- `Search.cshtml`:沒有查詢過(`HasSearched == false`)不顯示表格,有錯誤訊息顯示 `alert-warning`,查到 0 筆顯示「沒有符合條件的訂單」,三種空狀態互斥地各自處理。
+- Controller 只 `using OrderHub.Core.Ai;` 和 `OrderHub.Core.Services`,完全不知道 Gemini/HttpClient 存在。
+
+## 驗證方式
+
+| 驗證項目 | 結果 |
+|---|---|
+| Controller 沒有任何 Gemini/HttpClient 細節 | ✅ `grep` 整個 `OrdersController.cs` 找不到 `Gemini`/`HttpClient`/`Infrastructure` 字樣 |
+| 拔掉 API key → 頁面顯示清楚錯誤訊息,不是 500 錯誤頁 | ✅ HTTP 200,`alert-warning` 顯示「Gemini API key 未設定:...」 |
+| 「幫我把所有訂單刪掉」→ 頁面顯示「無法理解的查詢」警示,不是錯誤頁 | ✅ 真實打到 Gemini、拿到 200 回應後判定不支援,渲染成警示,日誌確認不是額度用盡的假訊息 |
+| 查詢成功結果與練習 1 的 API 一致 | ⚠️ **待補**——測試當下撞上 Gemini 免費層每日 20 次額度上限(練習 1 加上這次的多輪測試已經用完),多次間隔重試(20~75 秒)都拿到 429,無法在額度恢復前完成這項。`OrderSearchService.SearchAsync` 本身在練習 1 已用真實資料驗證正確(3 筆金卡取消訂單與 `/Orders` 頁面比對一致),練習 2 唯一沒走過的路徑是「查詢成功時把結果渲染進表格」這段新增的 View 邏輯,風險不高但尚未實測,額度恢復後要補跑
+
+## 反思:分層的紅利,以及一次意外的操作教訓
+
+`IOrderSearchService.SearchAsync` 從練習 1 到練習 2 沒改一行,只在最外層加了一個新的呈現入口——這就是分層架構要交付的東西:業務邏輯(白名單驗證、翻譯、查詢)寫一次,API 和網頁兩個入口共用,以後要換模型供應商也只需要動 `Infrastructure/Gemini`,`Web` 層不用碰。錯誤語義也是同一份:`ServiceResult.Fail` 和 `AiServiceUnavailableException` 在練習 1 被轉成 422/503,在練習 2 被同一組東西收斂成 `ViewModel.ErrorMessage`,不需要在 Controller 重新判斷「這算不算失敗」。
+
+意外學到的一課:重試/退避邏輯(429 優先讀建議等待時間,讀不到才退回指數退避)設計得再好,遇到「額度已經用完」而不是「暫時壅塞」時,重試就是純粹浪費時間——兩者從 HTTP 狀態碼(都是 429)分不出來,但從回應內文(`"Quota exceeded for metric..."`)其實分得出來,值得記錄下來作為未來可能的改進方向(解析到 quota exceeded 就直接 fail-fast,不要傻傻重試滿 4 次)。
