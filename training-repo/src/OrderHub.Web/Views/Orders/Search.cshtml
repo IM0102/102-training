@@ -1,0 +1,55 @@
+@model OrderSearchViewModel
+@{
+    ViewData["Title"] = "自然語言查訂單";
+}
+
+<h1 class="h3 mb-3">自然語言查訂單</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto flex-grow-1">
+        <input type="text" name="q" value="@Model.Query" class="form-control"
+               placeholder="例如:上個月金卡會員取消的訂單" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">查詢</button>
+    </div>
+</form>
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="alert alert-warning">@Model.ErrorMessage</div>
+}
+else if (Model.HasSearched)
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>客戶</th>
+                <th>狀態</th>
+                <th class="text-end">金額</th>
+                <th class="text-end">品項數</th>
+                <th>建立時間</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Orders.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">沒有符合條件的訂單</td>
+                </tr>
+            }
+            @foreach (var order in Model.Orders)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@order.Id">#@order.Id</a></td>
+                    <td>@order.CustomerName</td>
+                    <td><span class="badge @StatusBadgeClass(order.Status)">@StatusLabel(order.Status)</span></td>
+                    <td class="text-end">@Money(order.Total)</td>
+                    <td class="text-end">@order.ItemCount</td>
+                    <td>@LocalTime(order.CreatedAt)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
