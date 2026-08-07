@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OrderHub.Core.Ai;
 using OrderHub.Core.Common;
 using OrderHub.Core.Domain;
 using OrderHub.Core.Interfaces;
@@ -71,6 +72,29 @@ public class OrderRepository : IOrderRepository
             .ToListAsync();
 
         return totals.ToDictionary(x => x.ProductId, x => x.Total);
+    }
+
+    public async Task<IReadOnlyList<Order>> SearchAsync(OrderSearchQuery query)
+    {
+        var q = _db.Orders
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
+            .AsQueryable();
+
+        if (query.Status.HasValue)
+            q = q.Where(o => o.Status == query.Status.Value);
+        if (query.MemberTier.HasValue)
+            q = q.Where(o => o.Customer != null && o.Customer.Tier == query.MemberTier.Value);
+        if (query.DateFrom.HasValue)
+            q = q.Where(o => o.CreatedAt >= query.DateFrom.Value.Date);
+        if (query.DateTo.HasValue)
+        {
+            var endExclusive = query.DateTo.Value.Date.AddDays(1);   // 含當日
+            q = q.Where(o => o.CreatedAt < endExclusive);
+        }
+
+        // 上限保險:就算條件很寬,也不把整張表倒出來
+        return await q.OrderByDescending(o => o.CreatedAt).Take(100).ToListAsync();
     }
 
     public async Task AddAsync(Order order) => await _db.Orders.AddAsync(order);

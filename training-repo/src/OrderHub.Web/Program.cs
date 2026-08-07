@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using OrderHub.Core.Ai;
 using OrderHub.Core.Interfaces;
 using OrderHub.Core.Services;
 using OrderHub.Infrastructure.Data;
+using OrderHub.Infrastructure.Gemini;
 using OrderHub.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,12 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+
+// Gemini:設定 + typed HttpClient + 分層接線
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddHttpClient<IGeminiJsonClient, GeminiInteractionsClient>();
+builder.Services.AddScoped<IOrderQueryTranslator, GeminiOrderQueryTranslator>();
+builder.Services.AddScoped<IOrderSearchService, OrderSearchService>();
 
 var app = builder.Build();
 
@@ -45,5 +53,6 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();   // 讓 [ApiController] 的屬性路由生效
 
 app.Run();
