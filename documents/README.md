@@ -11,7 +11,7 @@
 | 1    | Agentic Coding:用 agent 讀懂專案、修 bug、加功能 | [活動 1](activities/activity-guideline.md)    |
 | 2    | MCP Server:給 agent 造工具                       | [活動 2](activities/activity-2-custom-mcp.md) |
 | 3    | Gemini 免費 API:把 AI 嵌進產品                   | [活動 3](activities/activity-3-gemini-api.md) |
-| 4    | 敬請期待                                         |                                               |
+| 4    | n8n 自動化:把人抽離流程                          | [活動 4](activities/activity-4-n8n.md)        |
 
 ## 技術棧
 
